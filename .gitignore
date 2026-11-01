@@ -53,3 +53,7 @@ Thumbs.db
 
 # 9. Documentos de testes manuais legados (substituídos por suíte Pytest)
 MANUAL_DE_TESTES_INCLUSIGN.txt
+PLANO_DE_EXECUCAO_SENIOR.txt
+# 10. Notas e planos locais de desenvolvimento
+*.plan.txt
+*_interno.txt
