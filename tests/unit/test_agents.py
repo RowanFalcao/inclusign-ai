@@ -25,8 +25,6 @@ def test_translation_agent_lookup_dicionario(
     mock_llm_service, mock_rag_service, tmp_path, monkeypatch
 ):
     """Valida a busca determinística direta nos dicionários da base."""
-    agent = AgenteTraducao(mock_llm_service, mock_rag_service)
-
     # Cria dicionário simulado no tmp_path para determinismo e isolamento em CI/CD
     dic_dir = tmp_path / "traducao" / "computacao"
     dic_dir.mkdir(parents=True)
@@ -41,7 +39,13 @@ def test_translation_agent_lookup_dicionario(
         encoding="utf-8",
     )
 
+    # Patcha ambas as referências: o módulo config e a cópia local no translation_agent
+    import agents.translation_agent as ta_mod
+
     monkeypatch.setattr(config, "KNOWLEDGE_DIR", tmp_path)
+    monkeypatch.setattr(ta_mod, "KNOWLEDGE_DIR", tmp_path)
+
+    agent = AgenteTraducao(mock_llm_service, mock_rag_service)
 
     verbete = agent._buscar_verbete_dicionario("Nuvem Computacional", "computacao")
     assert verbete is not None
