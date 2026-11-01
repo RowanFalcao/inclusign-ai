@@ -3,9 +3,12 @@ IncluSign AI — Serviço RAG (Retrieval-Augmented Generation)
 ===========================================================
 Pipeline completo atualizado para usar o motor vetorial QDRANT.
 Garante alta resiliência no Windows e compatibilidade com Numpy 2.0+
+Suporta arquitetura taxonômica hierárquica por módulos e domínios.
 
 Requisitos atendidos: RNF-002 (offline), estratégia do Documento 7.
 """
+
+from __future__ import annotations
 
 import hashlib
 import logging
@@ -33,19 +36,23 @@ logger = logging.getLogger(__name__)
 class RAGService:
     """Serviço de Retrieval-Augmented Generation (RAG) integrado ao banco vetorial Qdrant."""
 
-    def __init__(self):
-        self.available = False
-        self.doc_count = 0
-        self.chunk_count = 0
+    def __init__(self) -> None:
+        self.available: bool = False
+        self.doc_count: int = 0
+        self.chunk_count: int = 0
         self._client = None
         self._embedder = None
-        self._initialized = False
-        self._init_message = ""
+        self._initialized: bool = False
+        self._init_message: str = ""
 
         self._initialize()
 
-    def _process_new_pdfs(self):
-        """Verifica novos arquivos PDF, executa extração textual e move para o repositório de processados."""
+    def _process_new_pdfs(self) -> None:
+        """
+        Verifica recursivamente novos arquivos PDF em pdfs_brutos/,
+        executa extração textual de alta fidelidade e move os arquivos para pdfs_processados/.
+        Preserva a hierarquia taxonômica de subpastas em base-conhecimento/.
+        """
         from services.text_processor import (
             TextProcessor,  # Importação dinâmica do processador textual
         )
@@ -56,17 +63,23 @@ class RAGService:
         raw_dir.mkdir(parents=True, exist_ok=True)
         processed_dir.mkdir(parents=True, exist_ok=True)
 
-        pdf_files = list(raw_dir.glob("*.pdf"))
+        pdf_files = [p for p in raw_dir.rglob("*.pdf") if p.is_file()]
         if not pdf_files:
             return
 
         logger.info(
-            f"Automação: {len(pdf_files)} novos PDFs encontrados. Iniciando extração estrutural..."
+            "Automação: %d novos PDFs encontrados. Iniciando extração estrutural...",
+            len(pdf_files),
         )
 
         for pdf_path in pdf_files:
-            txt_name = pdf_path.with_suffix(".txt").name
-            txt_path_dest = KNOWLEDGE_DIR / txt_name
+            try:
+                rel_path = pdf_path.relative_to(raw_dir)
+            except ValueError:
+                rel_path = Path(pdf_path.name)
+
+            txt_path_dest = (KNOWLEDGE_DIR / rel_path).with_suffix(".txt")
+            txt_path_dest.parent.mkdir(parents=True, exist_ok=True)
 
             try:
                 # 1. Extração estrutural por blocos com ordenação espacial de colunas
@@ -93,31 +106,33 @@ class RAGService:
                 with open(str(txt_path_dest), "w", encoding="utf-8") as f:
                     f.write(clean_full_text)
 
-                # 4. Realocação do PDF original para a pasta de processados
-                destination = processed_dir / pdf_path.name
+                # 4. Realocação do PDF original para a pasta de processados preservando hierarquia
+                destination = processed_dir / rel_path
+                destination.parent.mkdir(parents=True, exist_ok=True)
                 if destination.exists():
                     destination.unlink()
                 shutil.move(str(pdf_path), str(destination))
 
                 logger.info(
-                    f"Sucesso: {pdf_path.name} convertido com segurança e movido para pdfs_processados."
+                    "Sucesso: %s convertido com segurança e movido para pdfs_processados.",
+                    rel_path,
                 )
 
             except Exception as exc:
-                logger.error(f"Erro ao converter {pdf_path.name}: {exc}")
+                logger.error("Erro ao converter %s: %s", pdf_path.name, exc)
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         try:
             KNOWLEDGE_DIR.mkdir(parents=True, exist_ok=True)
             VECTOR_DB_DIR.mkdir(parents=True, exist_ok=True)
 
             self._process_new_pdfs()
 
-            txt_files = list(KNOWLEDGE_DIR.glob("*.txt"))
+            txt_files = [p for p in KNOWLEDGE_DIR.rglob("*.txt") if p.is_file()]
 
             # Fallback transparente para dados de demonstração públicos
             if not txt_files and SAMPLE_KNOWLEDGE_DIR.exists():
-                txt_files = list(SAMPLE_KNOWLEDGE_DIR.glob("*.txt"))
+                txt_files = [p for p in SAMPLE_KNOWLEDGE_DIR.rglob("*.txt") if p.is_file()]
                 if txt_files:
                     logger.info(
                         "Base local vazia. Inicializando RAG com dataset demonstrativo (sample_knowledge)."
@@ -164,7 +179,7 @@ class RAGService:
             self._init_message = "Erro ao inicializar Qdrant."
             logger.error("Erro no RAG (Qdrant): %s", exc, exc_info=True)
 
-    def _try_load_existing_collection(self):
+    def _try_load_existing_collection(self) -> None:
         try:
             from qdrant_client import QdrantClient
 
@@ -184,7 +199,7 @@ class RAGService:
         except Exception as exc:
             logger.debug("Sem coleção no Qdrant: %s", exc)
 
-    def _setup_qdrant(self):
+    def _setup_qdrant(self) -> None:
         from qdrant_client import QdrantClient
         from qdrant_client.models import Distance, VectorParams
         from sentence_transformers import SentenceTransformer
@@ -204,11 +219,11 @@ class RAGService:
                 vectors_config=VectorParams(size=384, distance=Distance.COSINE),
             )
 
-    def _ingest_documents(self, txt_files: list[Path]):
+    def _ingest_documents(self, txt_files: list[Path]) -> None:
         from qdrant_client.models import PointStruct
 
-        all_chunks = []
-        all_metadatas = []
+        all_chunks: list[str] = []
+        all_metadatas: list[dict] = []
 
         for txt_path in txt_files:
             try:
@@ -218,16 +233,35 @@ class RAGService:
                 if not full_text.strip():
                     continue
 
+                try:
+                    rel = txt_path.relative_to(KNOWLEDGE_DIR)
+                except ValueError:
+                    rel = Path(txt_path.name)
+
+                parts = rel.parts
+                # Taxonomia: base-conhecimento/<modulo>/<dominio>/arquivo.txt
+                modulo = parts[0] if len(parts) >= 2 else "geral"
+                dominio = parts[1] if len(parts) >= 3 else (parts[0] if len(parts) == 2 else "geral")
+
                 chunks = self._chunk_text(full_text)
                 for i, chunk in enumerate(chunks):
                     all_chunks.append(chunk)
-                    all_metadatas.append({"source": txt_path.name, "chunk_index": i, "text": chunk})
+                    all_metadatas.append(
+                        {
+                            "source": txt_path.name,
+                            "rel_path": str(rel).replace("\\", "/"),
+                            "modulo": modulo,
+                            "dominio": dominio,
+                            "chunk_index": i,
+                            "text": chunk,
+                        }
+                    )
             except Exception as exc:
                 logger.error("Erro TXT '%s': %s", txt_path.name, exc)
                 continue
 
         if all_chunks:
-            logger.info(f"Gerando embeddings para {len(all_chunks)} trechos (aguarde)...")
+            logger.info("Gerando embeddings para %d trechos (aguarde)...", len(all_chunks))
             vectors = self._embedder.encode(all_chunks).tolist()
 
             points = []
@@ -338,7 +372,17 @@ class RAGService:
     # Interface Pública
     # ------------------------------------------------------------------
 
-    def query(self, question: str, top_k: int | None = None) -> list[dict]:
+    def query(
+        self,
+        question: str,
+        top_k: int | None = None,
+        modulo: str | None = None,
+        dominio: str | None = None,
+    ) -> list[dict]:
+        """
+        Executa busca semântica no banco vetorial Qdrant com suporte opcional
+        a filtragem nativa por módulo e domínio taxonômico.
+        """
         if not self.available or self._client is None or self._embedder is None:
             return []
 
@@ -346,11 +390,22 @@ class RAGService:
             top_k = RAG_TOP_K
 
         try:
+            from qdrant_client.models import FieldCondition, Filter, MatchValue
+
+            must_conditions = []
+            if modulo:
+                must_conditions.append(FieldCondition(key="modulo", match=MatchValue(value=modulo)))
+            if dominio:
+                must_conditions.append(FieldCondition(key="dominio", match=MatchValue(value=dominio)))
+
+            query_filter = Filter(must=must_conditions) if must_conditions else None
+
             query_vector = self._embedder.encode(question).tolist()
             search_result = self._client.query_points(
                 collection_name=VECTOR_COLLECTION,
                 query=query_vector,
-                limit=min(top_k, self.chunk_count),
+                query_filter=query_filter,
+                limit=min(top_k, max(1, self.chunk_count)),
             ).points
 
             context_items = []
@@ -359,6 +414,9 @@ class RAGService:
                     {
                         "text": hit.payload.get("text", ""),
                         "source": hit.payload.get("source", "Desconhecido"),
+                        "rel_path": hit.payload.get("rel_path", ""),
+                        "modulo": hit.payload.get("modulo", ""),
+                        "dominio": hit.payload.get("dominio", ""),
                         "score": round(hit.score, 4),
                     }
                 )
@@ -368,6 +426,7 @@ class RAGService:
             return []
 
     def reindex(self) -> dict:
+        """Exclui a coleção atual e refaz a indexação completa de todos os documentos."""
         try:
             if self._client is not None:
                 self._client.delete_collection(VECTOR_COLLECTION)
