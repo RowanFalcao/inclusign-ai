@@ -20,6 +20,20 @@ def test_translation_agent_processar(mock_llm_service, mock_rag_service):
     mock_llm_service.generate.assert_called_once()
 
 
+def test_translation_agent_lookup_dicionario(mock_llm_service, mock_rag_service):
+    """Valida a busca determinística direta nos dicionários da base."""
+    agent = AgenteTraducao(mock_llm_service, mock_rag_service)
+
+    verbete = agent._buscar_verbete_dicionario("Nuvem Computacional", "computacao")
+    assert verbete is not None
+    assert "Nuvem Computacional" in verbete["bloco"]
+    assert "DESCRIÇÃO GLOSADA (LIBRAS)" in verbete["bloco"]
+
+    # Termo inexistente retorna None
+    inexistente = agent._buscar_verbete_dicionario("TermoTotalmenteInexistente123", "computacao")
+    assert inexistente is None
+
+
 def test_planning_agent_processar(mock_llm_service, mock_rag_service):
     """Valida o fluxo do agente de planejamento pedagógico adaptado."""
     agent = AgentePlanejamento(mock_llm_service, mock_rag_service)

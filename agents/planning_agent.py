@@ -4,8 +4,11 @@ IncluSign AI — Agente de Planejamento Pedagógico (Módulo 3)
 Gera planos de aula estruturados e adaptados ao perfil cognitivo
 de alunos surdos e neurodivergentes.
 
+Aplica Arquitetura RAG com filtragem taxonômica por perfil e DUA.
 Requisitos atendidos: RF-010 a RF-013
 """
+
+from __future__ import annotations
 
 import logging
 import time
@@ -101,18 +104,42 @@ class AgentePlanejamento(AgenteIA):
         if perfil == "outro" and perfil_detalhe:
             perfil_nome = perfil_detalhe
 
-        # Enriquecimento com contexto do RAG: filtragem de documentos e busca semântica
+        # Enriquecimento com contexto do RAG: filtragem taxonômica por módulo e perfil
         rag_query = f"adaptação pedagógica inclusão {perfil_nome} dicas estratégias"
         rag_context = ""
 
-        if self._rag and self._rag.available:
-            context_items = self._rag.query(rag_query, top_k=10)
-            textos_filtrados = []
+        # Mapeamento de subdomínios pedagógicos
+        perfil_clean = perfil.lower()
+        dominio_perfil = None
+        if "tea" in perfil_clean:
+            dominio_perfil = "tea"
+        elif "tdah" in perfil_clean:
+            dominio_perfil = "tdah"
+        elif "dislexia" in perfil_clean:
+            dominio_perfil = "dislexia"
+        elif "superdota" in perfil_clean or "altas" in perfil_clean:
+            dominio_perfil = "superdotacao"
+        elif "intelectual" in perfil_clean:
+            dominio_perfil = "deficiencia_intelectual"
 
+        if self._rag and self._rag.available:
+            context_items = self._rag.query(
+                rag_query,
+                top_k=5,
+                modulo="planejamento",
+                dominio=dominio_perfil,
+            )
+            # Se a busca com subdomínio trouxer poucos resultados, busca ampliada no módulo de planejamento
+            if len(context_items) < 3 and dominio_perfil:
+                context_items = self._rag.query(
+                    rag_query,
+                    top_k=5,
+                    modulo="planejamento",
+                )
+
+            textos_filtrados = []
             for item in context_items:
-                # Desconsidera dicionários terminológicos para restringir o contexto a manuais pedagógicos
-                if "dicionario" not in item.get("source", "").lower():
-                    textos_filtrados.append(f"\n[Fonte: {item['source']}]\n{item['text']}")
+                textos_filtrados.append(f"\n[Fonte: {item['source']}]\n{item['text']}")
 
             if textos_filtrados:
                 rag_context = (
