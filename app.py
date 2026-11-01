@@ -162,6 +162,7 @@ def create_app(
                 "versao": "1.0.0",
                 "modelo": config.OLLAMA_MODEL,
                 "servidor": f"{SERVER_HOST}:{SERVER_PORT}",
+                "diagnostico": config.get_system_diagnostics(),
             },
         })
 

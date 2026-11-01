@@ -116,3 +116,15 @@ def ensure_directories() -> None:
     """Cria os diretórios necessários se não existirem, com tratamento resiliente."""
     for directory in [KNOWLEDGE_DIR, VECTOR_DB_DIR, LOGS_DIR, PROMPTS_DIR, SAMPLE_KNOWLEDGE_DIR]:
         directory.mkdir(parents=True, exist_ok=True)
+
+
+def get_system_diagnostics() -> dict[str, object]:
+    """Retorna metadados de diagnóstico do ambiente de execução de forma segura."""
+    return {
+        "ollama_url": OLLAMA_URL,
+        "ollama_model": OLLAMA_MODEL,
+        "embedding_model": EMBEDDING_MODEL,
+        "knowledge_dir_exists": KNOWLEDGE_DIR.exists(),
+        "sample_knowledge_dir_exists": SAMPLE_KNOWLEDGE_DIR.exists(),
+        "vector_db_dir_exists": VECTOR_DB_DIR.exists(),
+    }
