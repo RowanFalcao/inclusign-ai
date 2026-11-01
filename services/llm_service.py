@@ -133,7 +133,7 @@ class LLMService:
             "messages": messages,
             "stream": stream,
             "options": {
-                "temperature": 0.6,
+                "temperature": temperature,
                 "top_p": 0.95,
                 "top_k": 20,
                 "repeat_penalty": 1.0,
