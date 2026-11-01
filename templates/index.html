@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="IncluSign AI — Plataforma de Agentes IA para Inclusão Educacional. Tradução contextual para Libras e planejamento pedagógico automatizado.">
+    <meta name="author" content="Rowan Falcão R. L. da Silva — UniRV PIVIC 2025-2026">
+    <title>IncluSign AI — Inclusão Educacional com IA</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤟</text></svg>">
+</head>
+
+<body>
+    <div class="app-container">
+
+        <!-- ============================================================ -->
+        <!-- HEADER -->
+        <!-- ============================================================ -->
+        <header class="app-header">
+            <button id="theme-toggle" class="theme-toggle-btn" aria-label="Alternar tema claro/escuro">
+                🌓 Mudar Tema
+            </button>
+            <h1 class="app-logo">IncluSign AI</h1>
+            <p class="app-subtitle">
+                Acelere sua Prática Docente
+                <br>Planos de aula adaptados e traduções contextuais para Libras em questão de segundos.
+            </p>
+            <span class="app-badge">
+                🏛️ Validação Acadêmica (UniRV) &nbsp;|&nbsp; 🔒 Privacidade Absoluta &nbsp;|&nbsp; 🧠 IA de Máxima
+                Precisão
+            </span>
+        </header>
+
+        <!-- ============================================================ -->
+        <!-- STATUS BAR -->
+        <!-- ============================================================ -->
+        <div class="status-bar" id="status-bar">
+            <div class="status-item">
+                <span class="status-dot offline" id="llm-status-dot"></span>
+                <span id="llm-status-text">Verificando IA...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-dot offline" id="rag-status-dot"></span>
+                <span id="rag-status-text">Verificando RAG...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-dot online" id="telemetry-status-dot"></span>
+                <span id="telemetry-status-text">Telemetria ativa</span>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- NAVIGATION (RF-001) -->
+        <!-- ============================================================ -->
+        <nav class="nav-container" role="navigation" aria-label="Navegação principal">
+            <button class="nav-btn active" data-section="home" id="nav-home">
+                <span class="nav-icon">🏠</span> Início
+            </button>
+            <button class="nav-btn" data-section="traducao" id="nav-traducao">
+                <span class="nav-icon">🤟</span> Tradução Libras
+            </button>
+            <button class="nav-btn" data-section="planejamento" id="nav-planejamento">
+                <span class="nav-icon">📋</span> Plano Pedagógico
+            </button>
+            <button class="nav-btn" data-section="telemetria" id="nav-telemetria">
+                <span class="nav-icon">📊</span> Telemetria
+            </button>
+        </nav>
+
+        <!-- ============================================================ -->
+        <!-- SEÇÃO: HOME (RF-001 — Menu de Agentes) -->
+        <!-- ============================================================ -->
+        <section class="section active" id="section-home">
+            <div class="agents-grid">
+                <!-- Card: Tradução Contextual -->
+                <div class="agent-card" id="card-traducao" tabindex="0" role="button"
+                    aria-label="Abrir módulo de Tradução Contextual para Libras">
+                    <span class="agent-card-icon">🤟</span>
+                    <h2 class="agent-card-title">Tradução Contextual para Libras</h2>
+                    <p class="agent-card-desc">
+                        Traduza termos técnicos das áreas de Computação, Medicina e
+                        Agronomia com explicações contextuais, apoio semiótico e
+                        glossário adaptativo para intérpretes de Libras.
+                    </p>
+                    <ul class="agent-card-features">
+                        <li>Explicação conceitual em linguagem acessível</li>
+                        <li>Apoio semiótico para interpretação</li>
+                        <li>Glossário adaptativo automático</li>
+                        <li>Avisos de limitação e escopo</li>
+                    </ul>
+                </div>
+
+                <!-- Card: Planejamento Pedagógico -->
+                <div class="agent-card" id="card-planejamento" tabindex="0" role="button"
+                    aria-label="Abrir módulo de Planejamento Pedagógico">
+                    <span class="agent-card-icon">📋</span>
+                    <h2 class="agent-card-title">Planejamento Pedagógico Adaptado</h2>
+                    <p class="agent-card-desc">
+                        Gere planos de aula estruturados e personalizados para alunos
+                        surdos e neurodivergentes, com estratégias pedagógicas
+                        adaptadas ao perfil cognitivo de cada estudante.
+                    </p>
+                    <ul class="agent-card-features">
+                        <li>Planos adaptados por perfil (TDAH, TEA, Surdez...)</li>
+                        <li>Cronograma e estratégias detalhadas</li>
+                        <li>Avaliação formativa inclusiva</li>
+                        <li>Glossário pedagógico integrado</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SEÇÃO: TRADUÇÃO CONTEXTUAL (RF-003 a RF-009) -->
+        <!-- ============================================================ -->
+        <section class="section" id="section-traducao">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">🤟</div>
+                    <div>
+                        <h2 class="panel-title">Tradução Contextual para Libras</h2>
+                        <p class="panel-description">Insira o termo técnico e o contexto para gerar a tradução</p>
+                    </div>
+                </div>
+
+                <!-- Aviso de escopo dinâmico (RF-004) -->
+                <div class="alert alert-info" id="aviso-escopo" style="display: none;">
+                    <span class="alert-icon">🔍</span>
+                    <span id="aviso-escopo-texto"></span>
+                </div>
+
+                <form id="form-traducao" autocomplete="off">
+                    <!-- Seleção de Domínio (RF-003) -->
+                    <div class="form-group">
+                        <label class="form-label" for="dominio">
+                            Área de Conhecimento <span class="required">*</span>
+                        </label>
+                        <select class="form-select" id="dominio" name="dominio" required>
+                            <option value="">Selecione a área...</option>
+                            <option value="computacao">💻 Computação e Tecnologia</option>
+                            <option value="medicina">🏥 Medicina e Ciências da Saúde</option>
+                            <option value="agronomia">🌱 Agronomia e Ciências Agrárias</option>
+                        </select>
+                    </div>
+
+                    <!-- Entrada de Termos (RF-005) -->
+                    <div class="form-group">
+                        <label class="form-label" for="termo">
+                            Termo Técnico <span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-input" id="termo" name="termo"
+                            placeholder="Ex: Algoritmo, Anamnese, Fitossanidade..." required>
+                        <span class="form-hint">O termo que deseja traduzir contextualmente</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="contexto-traducao">
+                            Contexto de Uso
+                        </label>
+                        <textarea class="form-textarea" id="contexto-traducao" name="contexto"
+                            placeholder="Descreva como esse termo está sendo usado na aula... (opcional, mas melhora a qualidade)"></textarea>
+                        <span class="form-hint">Quanto mais contexto, mais precisa será a tradução</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg btn-full" id="btn-traduzir">
+                        🤟 Gerar Tradução Contextual
+                    </button>
+                </form>
+
+                <!-- Loading -->
+                <div class="loading-container" id="loading-traducao">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">Processando tradução contextual...</p>
+                    <p class="loading-subtext">O modelo de IA está gerando a resposta. Isso pode levar alguns segundos.
+                    </p>
+                </div>
+
+                <!-- Botão de Parar Geração (fora do loading para permanecer visível durante o stream) -->
+                <div id="stop-btn-container-traducao" style="display: none; text-align: center; margin-top: 12px;">
+                    <button id="btn-stop-traducao" class="btn btn-secondary"
+                        style="border-color: var(--color-error); color: var(--color-error);"
+                        onclick="cancelGeneration('traducao')">
+                        🛑 Parar Geração (Esc)
+                    </button>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-container" id="result-traducao">
+                    <!-- Aviso de limitação oficial (RF-008) -->
+                    <div class="alert alert-warning" id="aviso-limitacao-traducao" style="display: none;">
+                        <span class="alert-icon">⚠️</span>
+                        <span></span>
+                    </div>
+                    <div class="result-content" id="result-traducao-content"></div>
+                    <div class="result-meta" id="result-traducao-meta"></div>
+                </div>
+
+                <!-- CHAT DE REFINAMENTO (Tradução) -->
+                <div class="chat-container" id="chat-traducao" style="display:none;">
+                    <div class="chat-header">
+                        <span class="chat-header-icon">💬</span>
+                        <span>Deseja refinar ou perguntar algo sobre esta tradução?</span>
+                    </div>
+                    <div class="chat-messages" id="chat-messages-traducao"></div>
+                    <div class="chat-input-area">
+                        <textarea class="chat-input" id="chat-input-traducao"
+                            placeholder="Ex: Pode detalhar mais o apoio semíitico? Existe um classificador mais adequado?"
+                            rows="2"></textarea>
+                        <button class="chat-send-btn" id="chat-send-traducao" onclick="sendChatMessage('traducao')"
+                            aria-label="Enviar mensagem">
+                            ➤
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SEÇÃO: PLANEJAMENTO PEDAGÓGICO (RF-010 a RF-013) -->
+        <!-- ============================================================ -->
+        <section class="section" id="section-planejamento">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">📋</div>
+                    <div>
+                        <h2 class="panel-title">Planejamento Pedagógico Adaptado</h2>
+                        <p class="panel-description">Gere planos de aula personalizados para educação inclusiva</p>
+                    </div>
+                </div>
+
+                <!-- Instrução automática (RF-010) com gatilho de recompensa e clareza -->
+                <div class="alert alert-info" id="instrucao-planejamento">
+                    <span class="alert-icon">💡</span>
+                    <span>
+                        <strong>Desbloqueie o potencial do aluno:</strong> A IA do IncluSign trabalha como seu
+                        assistente pessoal.
+                        Descreva o tema, os objetivos e os desafios específicos do aluno; em troca, arquitetaremos um
+                        cronograma pedagógico
+                        altamente personalizado e pronto para uso em sala de aula.
+                    </span>
+                </div>
+
+                <form id="form-planejamento" autocomplete="off">
+                    <!-- Tema (RF-011) -->
+                    <div class="form-group">
+                        <label class="form-label" for="tema">
+                            Tema da Aula <span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-input" id="tema" name="tema"
+                            placeholder="Ex: Sistema Solar, Revolução Francesa, Equações de 2º grau..." required>
+                    </div>
+
+                    <!-- Objetivos (RF-011) -->
+                    <div class="form-group">
+                        <label class="form-label" for="objetivos">
+                            Objetivos de Aprendizagem <span class="required">*</span>
+                        </label>
+                        <textarea class="form-textarea" id="objetivos" name="objetivos"
+                            placeholder="Descreva o que o aluno deve ser capaz de fazer após a aula..."
+                            required></textarea>
+                    </div>
+
+                    <!-- Perfil (RF-011) -->
+                    <div class="form-group">
+                        <label class="form-label" for="perfil">
+                            Perfil de Necessidade do Aluno <span class="required">*</span>
+                        </label>
+                        <select class="form-select" id="perfil" name="perfil" required>
+                            <option value="">Selecione o perfil...</option>
+                            <option value="tdah">🧠 TDAH</option>
+                            <option value="dislexia">📖 Dislexia</option>
+                            <option value="tea">🧩 TEA (Autismo)</option>
+                            <option value="surdez">🤟 Surdez / Deficiência Auditiva</option>
+                            <option value="baixa_visao">👁️ Baixa Visão</option>
+                            <option value="superdotacao">⭐ Altas Habilidades / Superdotação</option>
+                            <option value="outro">📝 Outro</option>
+                        </select>
+                    </div>
+
+                    <!-- Detalhe do perfil (agora sempre visível) -->
+                    <div class="form-group" id="grupo-perfil-detalhe">
+                        <label class="form-label" for="perfil-detalhe">
+                            Descreva o perfil do aluno
+                        </label>
+                        <textarea class="form-textarea" id="perfil-detalhe" name="perfil_detalhe"
+                            placeholder="Descreva as necessidades específicas do aluno..."></textarea>
+                    </div>
+
+                    <!-- Duração -->
+                    <div class="form-group">
+                        <label class="form-label" for="duracao">
+                            Duração da Aula
+                        </label>
+                        <input type="text" class="form-input" id="duracao" name="duracao" value="50 minutos"
+                            placeholder="Ex: 50 minutos, 2 horas...">
+                    </div>
+
+                    <!-- ADICIONADO: Toggle de Raciocínio Profundo -->
+                    <div class="form-group"
+                        style="display: flex; align-items: center; gap: 12px; margin-top: 20px; margin-bottom: 25px; padding: 15px; background: var(--surface-2); border-radius: var(--radius-md); border: 1px solid var(--glass-border);">
+                        <input type="checkbox" id="toggle-raciocinio" name="toggle-raciocinio"
+                            style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--color-primary-500);">
+                        <label for="toggle-raciocinio" class="form-label"
+                            style="margin: 0; cursor: pointer; font-size: var(--font-size-sm); color: var(--text-primary);">
+                            🧠 <strong>Ativar Raciocínio Profundo da IA</strong> <br>
+                            <span
+                                style="font-weight: 400; color: var(--text-muted); font-size: var(--font-size-xs);">Respostas
+                                mais elaboradas, porém o tempo de espera pode aumentar em até 30 segundos.</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg btn-full" id="btn-planejar">
+                        📋 Gerar Plano de Aula
+                    </button>
+                </form>
+
+                <!-- Loading -->
+                <div class="loading-container" id="loading-planejamento">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">Elaborando plano pedagógico adaptado...</p>
+                    <p class="loading-subtext">O modelo de IA está construindo seu plano personalizado.</p>
+                </div>
+
+                <!-- Botão de Parar Geração (fora do loading para permanecer visível durante o stream) -->
+                <div id="stop-btn-container-planejamento" style="display: none; text-align: center; margin-top: 12px;">
+                    <button id="btn-stop-planejamento" class="btn btn-secondary"
+                        style="border-color: var(--color-error); color: var(--color-error);"
+                        onclick="cancelGeneration('planejamento')">
+                        🛑 Parar Geração (Esc)
+                    </button>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-container" id="result-planejamento">
+                    <div class="result-content" id="result-planejamento-content"></div>
+                    <div class="result-meta" id="result-planejamento-meta"></div>
+                </div>
+
+                <!-- CHAT DE REFINAMENTO (Planejamento) -->
+                <div class="chat-container" id="chat-planejamento" style="display:none;">
+                    <div class="chat-header">
+                        <span class="chat-header-icon">💬</span>
+                        <span>Quer ajustar o plano? Converse com a IA para refiná-lo.</span>
+                    </div>
+                    <div class="chat-messages" id="chat-messages-planejamento"></div>
+                    <div class="chat-input-area">
+                        <textarea class="chat-input" id="chat-input-planejamento"
+                            placeholder="Ex: Reduza o cronograma para 30 minutos. Adicione uma atividade de pintura para o TEA Nível 1."
+                            rows="2"></textarea>
+                        <button class="chat-send-btn" id="chat-send-planejamento"
+                            onclick="sendChatMessage('planejamento')" aria-label="Enviar mensagem">
+                            ➤
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SEÇÃO: TELEMETRIA (RF-014, RF-015) -->
+        <!-- ============================================================ -->
+        <section class="section" id="section-telemetria">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">📊</div>
+                    <div>
+                        <h2 class="panel-title">Telemetria de Pesquisa</h2>
+                        <p class="panel-description">Histórico de interações e exportação de dados</p>
+                    </div>
+                </div>
+
+                <div class="telemetry-header">
+                    <div class="telemetry-stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-total">0</div>
+                            <div class="stat-label">Interações</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-traducoes">0</div>
+                            <div class="stat-label">Traduções</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-planejamentos">0</div>
+                            <div class="stat-label">Planejamentos</div>
+                        </div>
+                    </div>
+
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary" id="btn-export-csv" title="Exportar CSV">
+                            📄 Exportar CSV
+                        </button>
+                        <button class="btn btn-secondary" id="btn-export-txt" title="Exportar TXT">
+                            📝 Exportar TXT
+                        </button>
+                        <button class="btn btn-secondary" id="btn-refresh-telemetry" title="Atualizar">
+                            🔄 Atualizar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="telemetry-table">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Agente</th>
+                                <th>Entrada</th>
+                                <th>Tokens</th>
+                                <th>Tempo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="telemetry-tbody">
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">📊</div>
+                                        <p class="empty-state-text">Nenhuma interação registrada</p>
+                                        <p class="empty-state-hint">As interações aparecerão aqui após o uso dos
+                                            agentes.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- FOOTER -->
+        <!-- ============================================================ -->
+        <footer class="app-footer">
+            <p>
+                <strong>IncluSign AI</strong> v1.0.0 —
+                Plataforma de Agentes IA para Inclusão Educacional
+            </p>
+            <p>
+                Universidade de Rio Verde (UniRV) — PIVIC 2025-2026<br>
+                Desenvolvido por Rowan Falcão R. L. da Silva |
+                Orientador: Prof. Wayrone Klaiton Luiz Silva
+            </p>
+            <p style="margin-top: 0.5rem;">
+                🔒 Processamento 100% local (offline) — Nenhum dado é enviado para a internet
+            </p>
+        </footer>
+
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>

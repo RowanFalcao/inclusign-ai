@@ -1,0 +1,18 @@
+# IncluSign AI — Amostra Demonstrativa de Conhecimento Técnico (Libras e DUA)
+# Este dataset sintético permite a execução e validação imediata do pipeline RAG.
+
+TERMO TÉCNICO: 01 - Computação em Nuvem
+DOMÍNIO: Computação e Tecnologia
+CONCEITO: Modelo computacional que permite acesso sob demanda a recursos compartilhados de processamento e armazenamento através da internet, eliminando a necessidade de infraestrutura local física.
+DESCRIÇÃO GLOSADA (LIBRAS): COMPUTADOR [espaço-frente] CONECTAR REDE [espaço-alto]. ARQUIVO GUARDAR LUGAR INVISÍVEL INTERNET. ACESSAR QUALQUER LUGAR PODER.
+
+TERMO TÉCNICO: 02 - Lixiviação do Solo
+DOMÍNIO: Agronomia e Ciências Agrárias
+CONCEITO: Processo hidrológico no qual os nutrientes solúveis e componentes químicos do solo são arrastados e lavados pela infiltração da água da chuva ou irrigação em profundidade, distanciando-se das raízes das plantas.
+DESCRIÇÃO GLOSADA (LIBRAS): CHUVA FORTE CAIR [movimento descendente]. ÁGUA ENTRAR TERRA PROFUNDO. NUTRIENTE JUNTO DESCER PERDER. RAIZ PLANTA FICAR SEM COMIDA.
+
+TERMO TÉCNICO: 03 - Desenho Universal para a Aprendizagem (DUA)
+DOMÍNIO: Educação Especial e Neurodiversidade
+CONCEITO: Estrutura pedagógica voltada à otimização do ensino para todas as pessoas com base em insights científicos sobre como os seres humanos aprendem, estruturado em três redes neurais: engajamento (por que aprender), representação (o que aprender) e ação/expressão (como aprender).
+DIRETRIZES PEDAGÓGICAS: Prover múltiplos meios de representação dos conceitos, múltiplos meios de engajamento do estudante e flexibilidade nos modos de avaliação e expressão.
+

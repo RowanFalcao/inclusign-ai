@@ -1,0 +1,34 @@
+name: Relato de Bug
+description: Crie um relatório de erro para ajudar a melhorar o IncluSign AI
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Obrigado por relatar um problema! Por favor, preencha os detalhes abaixo.
+  - type: input
+    id: environment
+    attributes:
+      label: Ambiente de Execução
+      description: Informe seu SO (Windows/Linux/Mac), versão do Python e modelo Ollama.
+      placeholder: ex.: Ubuntu 22.04, Python 3.11, Qwen3:4b
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição do Bug
+      description: Uma descrição clara do que aconteceu de errado.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para Reproduzir
+      description: Como reproduzir o erro passo a passo.
+      placeholder: |
+        1. Iniciar servidor via python app.py
+        2. Fazer requisição POST para /api/translate
+        3. Observar retorno...
+    validations:
+      required: true
+

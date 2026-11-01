@@ -1,0 +1,22 @@
+name: Solicitação de Funcionalidade
+description: Sugira uma nova ideia ou melhoria pedagógica para a plataforma
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: Suas ideias para aprimorar a inclusão e acessibilidade são muito bem-vindas!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Qual problema ou barreira de acessibilidade essa melhoria resolve?
+      description: Explique o cenário educacional ou técnico.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Descrição da Solução Sugerida
+      description: Como você imagina essa funcionalidade operando na plataforma.
+    validations:
+      required: true
+

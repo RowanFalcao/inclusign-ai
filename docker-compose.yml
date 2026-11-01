@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  inclusign-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: inclusign_ai_app
+    restart: unless-stopped
+    ports:
+      - "${INCLUSIGN_PORT:-5000}:5000"
+    environment:
+      - INCLUSIGN_HOST=0.0.0.0
+      - INCLUSIGN_PORT=5000
+      - INCLUSIGN_OLLAMA_URL=${INCLUSIGN_OLLAMA_URL:-http://host.docker.internal:11434}
+      - INCLUSIGN_OLLAMA_MODEL=${INCLUSIGN_OLLAMA_MODEL:-qwen3:4b}
+      - INCLUSIGN_EMBEDDING_MODEL=${INCLUSIGN_EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./banco-vetorial:/app/banco-vetorial
+      - ./logs:/app/logs
+      - ./sample_knowledge:/app/sample_knowledge
+

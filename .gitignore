@@ -1,0 +1,55 @@
+# ==============================================================================
+# IncluSign AI — Git Ignore Oficial (Segurança e Portabilidade Sênior)
+# ==============================================================================
+
+# 1. Variáveis de ambiente e segredos locais
+.env
+.env.local
+*.env
+
+# 2. Prompts de pesquisa proprietários (proteção de autoria intelectual)
+# Nota: Os exemplos públicos (*.example.txt) são rastreados para garantir funcionamento
+prompts/*.txt
+!prompts/*.example.txt
+
+# 3. Bases de conhecimento acadêmicas locais e acervos de PDFs pesados
+base-conhecimento/
+pdfs_brutos/
+pdfs_processados/
+banco-vetorial/
+
+# 4. Registros de telemetria e execução local
+logs/
+*.jsonl
+
+# 5. Caches e Ambientes Virtuais Python
+.venv/
+env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 6. Testes, Cobertura e Ferramentas de Qualidade
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# 7. Modelos locais pesados e checkpoints
+models/
+*.bin
+*.onnx
+*.gguf
+
+# 8. Sistema Operacional e IDEs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 9. Documentos de testes manuais legados (substituídos por suíte Pytest)
+MANUAL_DE_TESTES_INCLUSIGN.txt
