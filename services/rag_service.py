@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 IncluSign AI — Serviço RAG (Retrieval-Augmented Generation)
 ===========================================================
@@ -9,26 +8,27 @@ Requisitos atendidos: RNF-002 (offline), estratégia do Documento 7.
 """
 
 import hashlib
-import uuid
 import logging
 import shutil
-import pymupdf as fitz
-import re
+import uuid
 from pathlib import Path
+
+import pymupdf as fitz
 
 from config import (
     BASE_DIR,
-    KNOWLEDGE_DIR,
-    SAMPLE_KNOWLEDGE_DIR,
-    VECTOR_DB_DIR,
-    VECTOR_COLLECTION,
     EMBEDDING_MODEL,
-    RAG_CHUNK_SIZE,
+    KNOWLEDGE_DIR,
     RAG_CHUNK_OVERLAP,
+    RAG_CHUNK_SIZE,
     RAG_TOP_K,
+    SAMPLE_KNOWLEDGE_DIR,
+    VECTOR_COLLECTION,
+    VECTOR_DB_DIR,
 )
 
 logger = logging.getLogger(__name__)
+
 
 class RAGService:
     """Serviço de Retrieval-Augmented Generation (RAG) integrado ao banco vetorial Qdrant."""
@@ -43,40 +43,44 @@ class RAGService:
         self._init_message = ""
 
         self._initialize()
-    
+
     def _process_new_pdfs(self):
         """Verifica novos arquivos PDF, executa extração textual e move para o repositório de processados."""
-        from services.text_processor import TextProcessor  # Importação dinâmica do processador textual
-        
+        from services.text_processor import (
+            TextProcessor,  # Importação dinâmica do processador textual
+        )
+
         raw_dir = BASE_DIR / "pdfs_brutos"
         processed_dir = BASE_DIR / "pdfs_processados"
-        
+
         raw_dir.mkdir(parents=True, exist_ok=True)
         processed_dir.mkdir(parents=True, exist_ok=True)
-        
+
         pdf_files = list(raw_dir.glob("*.pdf"))
         if not pdf_files:
             return
-            
-        logger.info(f"Automação: {len(pdf_files)} novos PDFs encontrados. Iniciando extração estrutural...")
-        
+
+        logger.info(
+            f"Automação: {len(pdf_files)} novos PDFs encontrados. Iniciando extração estrutural..."
+        )
+
         for pdf_path in pdf_files:
-            txt_name = pdf_path.with_suffix('.txt').name
+            txt_name = pdf_path.with_suffix(".txt").name
             txt_path_dest = KNOWLEDGE_DIR / txt_name
-            
+
             try:
                 # 1. Extração estrutural por blocos com ordenação espacial de colunas
                 document = fitz.open(str(pdf_path))
                 raw_blocks = []
-                
+
                 for page in document:
                     # O sinalizador TEXT_DEHYPHENATE une hifens automaticamente
                     # "blocks" extrai a estrutura lógica da página
                     blocks = page.get_text("blocks", flags=fitz.TEXT_DEHYPHENATE)
-                    
+
                     # Ordenação nativa por leitura top-down / colunas
                     blocks.sort(key=lambda b: (b[1], b[0]))
-                    
+
                     for b in blocks:
                         if b[6] == 0:  # Apenas blocos de texto
                             raw_blocks.append(b[4])
@@ -84,19 +88,21 @@ class RAGService:
 
                 # 2. Higienização e normalização do texto extraído
                 clean_full_text = TextProcessor.clean_extracted_blocks(raw_blocks)
-                
+
                 # 3. Persistência do texto normalizado na base de conhecimento
-                with open(str(txt_path_dest), 'w', encoding='utf-8') as f:
+                with open(str(txt_path_dest), "w", encoding="utf-8") as f:
                     f.write(clean_full_text)
-                    
+
                 # 4. Realocação do PDF original para a pasta de processados
                 destination = processed_dir / pdf_path.name
                 if destination.exists():
                     destination.unlink()
                 shutil.move(str(pdf_path), str(destination))
-                
-                logger.info(f"Sucesso: {pdf_path.name} convertido com segurança e movido para pdfs_processados.")
-                
+
+                logger.info(
+                    f"Sucesso: {pdf_path.name} convertido com segurança e movido para pdfs_processados."
+                )
+
             except Exception as exc:
                 logger.error(f"Erro ao converter {pdf_path.name}: {exc}")
 
@@ -108,12 +114,14 @@ class RAGService:
             self._process_new_pdfs()
 
             txt_files = list(KNOWLEDGE_DIR.glob("*.txt"))
-            
+
             # Fallback transparente para dados de demonstração públicos
             if not txt_files and SAMPLE_KNOWLEDGE_DIR.exists():
                 txt_files = list(SAMPLE_KNOWLEDGE_DIR.glob("*.txt"))
                 if txt_files:
-                    logger.info("Base local vazia. Inicializando RAG com dataset demonstrativo (sample_knowledge).")
+                    logger.info(
+                        "Base local vazia. Inicializando RAG com dataset demonstrativo (sample_knowledge)."
+                    )
 
             self.doc_count = len(txt_files)
 
@@ -127,13 +135,15 @@ class RAGService:
                 return
 
             self._setup_qdrant()
-            
+
             # Verificação de persistência prévia na coleção para evitar reindexação redundante
             try:
                 self.chunk_count = self._client.count(collection_name=VECTOR_COLLECTION).count
                 if self.chunk_count > 0:
                     self.available = True
-                    self._init_message = f"RAG carregado do cache Qdrant: {self.chunk_count} trechos."
+                    self._init_message = (
+                        f"RAG carregado do cache Qdrant: {self.chunk_count} trechos."
+                    )
                     logger.info(self._init_message)
                     return
             except Exception:
@@ -143,8 +153,7 @@ class RAGService:
 
             self.available = True
             self._init_message = (
-                f"RAG inicializado: {self.doc_count} documento(s), "
-                f"{self.chunk_count} trecho(s)."
+                f"RAG inicializado: {self.doc_count} documento(s), {self.chunk_count} trecho(s)."
             )
             logger.info(self._init_message)
 
@@ -158,15 +167,19 @@ class RAGService:
     def _try_load_existing_collection(self):
         try:
             from qdrant_client import QdrantClient
+
             self._client = QdrantClient(path=str(VECTOR_DB_DIR))
-            
+
             from sentence_transformers import SentenceTransformer
+
             self._embedder = SentenceTransformer(EMBEDDING_MODEL)
 
             self.chunk_count = self._client.count(collection_name=VECTOR_COLLECTION).count
             if self.chunk_count > 0:
                 self.available = True
-                self._init_message = f"RAG carregado: {self.chunk_count} trechos da sessão anterior."
+                self._init_message = (
+                    f"RAG carregado: {self.chunk_count} trechos da sessão anterior."
+                )
                 logger.info(self._init_message)
         except Exception as exc:
             logger.debug("Sem coleção no Qdrant: %s", exc)
@@ -184,7 +197,7 @@ class RAGService:
 
         collections_response = self._client.get_collections()
         col_names = [c.name for c in collections_response.collections]
-        
+
         if VECTOR_COLLECTION not in col_names:
             self._client.create_collection(
                 collection_name=VECTOR_COLLECTION,
@@ -199,7 +212,7 @@ class RAGService:
 
         for txt_path in txt_files:
             try:
-                with open(str(txt_path), 'r', encoding='utf-8') as f:
+                with open(str(txt_path), encoding="utf-8") as f:
                     full_text = f.read()
 
                 if not full_text.strip():
@@ -208,11 +221,7 @@ class RAGService:
                 chunks = self._chunk_text(full_text)
                 for i, chunk in enumerate(chunks):
                     all_chunks.append(chunk)
-                    all_metadatas.append({
-                        "source": txt_path.name,
-                        "chunk_index": i,
-                        "text": chunk
-                    })
+                    all_metadatas.append({"source": txt_path.name, "chunk_index": i, "text": chunk})
             except Exception as exc:
                 logger.error("Erro TXT '%s': %s", txt_path.name, exc)
                 continue
@@ -224,19 +233,14 @@ class RAGService:
             points = []
             for i in range(len(all_chunks)):
                 hash_id = hashlib.md5(f"{all_metadatas[i]['source']}_{i}".encode()).hexdigest()
-                point_id = str(uuid.UUID(hash_id[:32])) 
-                
-                points.append(
-                    PointStruct(id=point_id, vector=vectors[i], payload=all_metadatas[i])
-                )
+                point_id = str(uuid.UUID(hash_id[:32]))
+
+                points.append(PointStruct(id=point_id, vector=vectors[i], payload=all_metadatas[i]))
 
             batch_size = 100
             for start in range(0, len(points), batch_size):
                 end = start + batch_size
-                self._client.upsert(
-                    collection_name=VECTOR_COLLECTION,
-                    points=points[start:end]
-                )
+                self._client.upsert(collection_name=VECTOR_COLLECTION, points=points[start:end])
 
             self.chunk_count = self._client.count(collection_name=VECTOR_COLLECTION).count
 
@@ -244,54 +248,60 @@ class RAGService:
         cleaned_text = text.strip()
         if not cleaned_text:
             return []
-            
+
         # 1. Segmentação estruturada específica para dicionários terminológicos
         if cleaned_text.count("TERMO TÉCNICO:") > 5:
             parts = cleaned_text.split("TERMO TÉCNICO:")
             generated_chunks = []
-            
+
             header = parts[0].strip()
             if header and len(header) > 20:
                 generated_chunks.append(header)
-                
+
             for part in parts[1:]:
                 chunk = "TERMO TÉCNICO:" + part
                 if len(chunk.strip()) > 20:
                     generated_chunks.append(chunk.strip())
-            
+
             return generated_chunks
 
         # 2. Segmentação textual padrão com janela deslizante para artigos e manuais pedagógicos
-        paragraphs = [paragraph.strip() for paragraph in cleaned_text.split('\n') if paragraph.strip()]
-        
+        paragraphs = [
+            paragraph.strip() for paragraph in cleaned_text.split("\n") if paragraph.strip()
+        ]
+
         generated_chunks = []
         current_chunk_paragraphs = []
         current_chunk_length = 0
-        
+
         for paragraph in paragraphs:
             paragraph_length = len(paragraph)
-            
+
             # Tratamento para parágrafos excepcionalmente grandes
             if paragraph_length > RAG_CHUNK_SIZE:
                 if current_chunk_paragraphs:
                     generated_chunks.append(" ".join(current_chunk_paragraphs))
                     current_chunk_paragraphs = []
                     current_chunk_length = 0
-                
+
                 start_index = 0
                 while start_index < paragraph_length:
                     end_index = start_index + RAG_CHUNK_SIZE
                     if end_index < paragraph_length:
-                        safe_break_point = paragraph.rfind(". ", start_index + (RAG_CHUNK_SIZE // 2), end_index)
-                        if safe_break_point == -1: 
-                            safe_break_point = paragraph.rfind(" ", start_index + (RAG_CHUNK_SIZE // 2), end_index)
-                        if safe_break_point != -1: 
+                        safe_break_point = paragraph.rfind(
+                            ". ", start_index + (RAG_CHUNK_SIZE // 2), end_index
+                        )
+                        if safe_break_point == -1:
+                            safe_break_point = paragraph.rfind(
+                                " ", start_index + (RAG_CHUNK_SIZE // 2), end_index
+                            )
+                        if safe_break_point != -1:
                             end_index = safe_break_point + 1
-                    
+
                     chunk_segment = paragraph[start_index:end_index].strip()
-                    if chunk_segment: 
+                    if chunk_segment:
                         generated_chunks.append(chunk_segment)
-                    
+
                     start_index = end_index - RAG_CHUNK_OVERLAP
                     if start_index < 0:
                         start_index = 0
@@ -321,7 +331,7 @@ class RAGService:
             final_chunk = " ".join(current_chunk_paragraphs)
             if not generated_chunks or generated_chunks[-1] != final_chunk:
                 generated_chunks.append(final_chunk)
-                
+
         return generated_chunks
 
     # ------------------------------------------------------------------
@@ -332,23 +342,26 @@ class RAGService:
         if not self.available or self._client is None or self._embedder is None:
             return []
 
-        if top_k is None: top_k = RAG_TOP_K
+        if top_k is None:
+            top_k = RAG_TOP_K
 
         try:
             query_vector = self._embedder.encode(question).tolist()
             search_result = self._client.query_points(
                 collection_name=VECTOR_COLLECTION,
                 query=query_vector,
-                limit=min(top_k, self.chunk_count)
+                limit=min(top_k, self.chunk_count),
             ).points
 
             context_items = []
             for hit in search_result:
-                context_items.append({
-                    "text": hit.payload.get("text", ""),
-                    "source": hit.payload.get("source", "Desconhecido"),
-                    "score": round(hit.score, 4),
-                })
+                context_items.append(
+                    {
+                        "text": hit.payload.get("text", ""),
+                        "source": hit.payload.get("source", "Desconhecido"),
+                        "score": round(hit.score, 4),
+                    }
+                )
             return context_items
         except Exception as exc:
             logger.error("Erro na consulta Qdrant RAG: %s", exc)
@@ -362,7 +375,12 @@ class RAGService:
             self.available = False
             self.chunk_count = 0
             self._initialize()
-            return {"success": True, "message": self._init_message, "documentos": self.doc_count, "trechos": self.chunk_count}
+            return {
+                "success": True,
+                "message": self._init_message,
+                "documentos": self.doc_count,
+                "trechos": self.chunk_count,
+            }
         except Exception as exc:
             logger.error("Erro ao re-indexar: %s", exc)
             return {"success": False, "message": f"Erro: {exc}", "documentos": 0, "trechos": 0}

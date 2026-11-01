@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 IncluSign AI — Configurações Centralizadas e Portáveis
 ======================================================
@@ -16,6 +15,7 @@ from pathlib import Path
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(Path(__file__).resolve().parent / ".env")
 except ImportError:
     pass
@@ -72,10 +72,7 @@ LLM_REPEAT_LAST_N = int(os.environ.get("INCLUSIGN_LLM_REPEAT_LAST_N", "64"))
 # ============================================================================
 
 # Modelo de embeddings para busca semântica
-EMBEDDING_MODEL = os.environ.get(
-    "INCLUSIGN_EMBEDDING_MODEL",
-    "all-MiniLM-L6-v2"
-)
+EMBEDDING_MODEL = os.environ.get("INCLUSIGN_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 
 # Tamanho dos chunks de texto para indexação (em caracteres)
 RAG_CHUNK_SIZE = int(os.environ.get("INCLUSIGN_RAG_CHUNK_SIZE", "800"))
@@ -111,6 +108,7 @@ LOG_FILENAME_PATTERN = "inclusign_telemetry_{date}.jsonl"
 # ============================================================================
 # INICIALIZAÇÃO DE DIRETÓRIOS ESSENCIAIS
 # ============================================================================
+
 
 def ensure_directories() -> None:
     """Cria os diretórios necessários se não existirem, com tratamento resiliente."""

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testes de integração para as rotas da API REST do IncluSign AI."""
 
 
@@ -70,4 +69,3 @@ def test_api_telemetry_endpoint(client):
     data = response.get_json()
     assert "historico" in data
     assert "estatisticas" in data
-

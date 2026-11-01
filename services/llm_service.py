@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 IncluSign AI — Serviço de LLM (Adapter Pattern)
 ================================================
@@ -11,20 +10,20 @@ Requisitos atendidos: RNF-004, RNF-002, RNF-005, RNF-006
 
 import json
 import logging
+
 import requests
-import re
 
 from config import (
-    OLLAMA_URL,
-    OLLAMA_MODEL,
-    LLM_TIMEOUT,
-    LLM_TEMPERATURE,
-    LLM_MAX_TOKENS,
     LLM_MAX_CONTEXT,
-    LLM_REPEAT_LAST_N,
+    LLM_MAX_TOKENS,
+    LLM_TEMPERATURE,
+    LLM_TIMEOUT,
+    OLLAMA_MODEL,
+    OLLAMA_URL,
 )
 
 logger = logging.getLogger(__name__)
+
 
 class LLMService:
     """
@@ -41,7 +40,7 @@ class LLMService:
         self.model = model
         self.timeout = timeout
         self._available = False  # cache de status
-        self.active_type = "local"    # "nuvem" ou "local"
+        self.active_type = "local"  # "nuvem" ou "local"
 
     # ------------------------------------------------------------------
     # Interface Pública
@@ -59,7 +58,9 @@ class LLMService:
                 model_base = self.model.split(":")[0]
                 has_model = any(model_base in m for m in models)
                 if not has_model:
-                    logger.warning("Ollama acessível em %s, mas modelo '%s' não encontrado.", url, self.model)
+                    logger.warning(
+                        "Ollama acessível em %s, mas modelo '%s' não encontrado.", url, self.model
+                    )
                 return has_model
             return False
         except requests.RequestException:
@@ -106,27 +107,27 @@ class LLMService:
             temperature = LLM_TEMPERATURE
         if max_tokens is None:
             max_tokens = LLM_MAX_TOKENS
-        
+
         if not self._available:
             self.is_available()
 
         if not self._available:
             return {
-                "success": False, 
-                "content": "Servidor de IA local não disponível.", 
-                "tokens_used": 0
+                "success": False,
+                "content": "Servidor de IA local não disponível.",
+                "tokens_used": 0,
             }
-        
+
         # Sempre construir mensagens no formato do chat para garantir o uso correto do template do modelo
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
-        
+
         if messages_override:
             messages.extend(messages_override)
         else:
             messages.append({"role": "user", "content": prompt})
-        
+
         payload = {
             "model": self.model,
             "messages": messages,
@@ -144,7 +145,7 @@ class LLMService:
             "think": True,
         }
         endpoint = f"{self.url}/api/chat"
-            
+
         try:
             if stream:
                 resp = requests.post(endpoint, json=payload, stream=True, timeout=self.timeout)
@@ -154,7 +155,22 @@ class LLMService:
                     in_fallback_thinking = False
                     buffer = ""
                     # Prefixos parciais possíveis para retenção durante streaming
-                    tag_prefixes = ("</think>", "</think", "</thin", "</thi", "</th", "</t", "</", "<think>", "<think", "<thin", "<thi", "<th", "<t", "<")
+                    tag_prefixes = (
+                        "</think>",
+                        "</think",
+                        "</thin",
+                        "</thi",
+                        "</th",
+                        "</t",
+                        "</",
+                        "<think>",
+                        "<think",
+                        "<thin",
+                        "<thi",
+                        "<th",
+                        "<t",
+                        "<",
+                    )
 
                     for line in resp.iter_lines():
                         if line:
@@ -198,14 +214,17 @@ class LLMService:
                                     buffer = ""
 
                                 if emit_part:
-                                    yield {"content": emit_part, "is_thinking": in_fallback_thinking}
+                                    yield {
+                                        "content": emit_part,
+                                        "is_thinking": in_fallback_thinking,
+                                    }
 
                     # Ao final do stream, emitir qualquer resquício seguro do buffer
                     if buffer:
                         buffer = buffer.replace("<think>", "").replace("</think>", "")
                         if buffer:
                             yield {"content": buffer, "is_thinking": in_fallback_thinking}
-                                
+
                 return token_generator()
 
             # Processamento síncrono (sem streaming)
@@ -221,15 +240,15 @@ class LLMService:
             content = data.get("message", {}).get("content", "")
 
             # Truncamento defensivo em caso de repetição de seções estruturais
-            first_h3 = content.find('### 1.')
+            first_h3 = content.find("### 1.")
             if first_h3 != -1:
-                second_h3 = content.find('### 1.', first_h3 + 6)
+                second_h3 = content.find("### 1.", first_h3 + 6)
                 if second_h3 != -1:
                     content = content[:second_h3]
-            
+
             content = content.strip()
-            tokens = data.get("eval_count", 0) 
-            
+            tokens = data.get("eval_count", 0)
+
             return {
                 "success": True,
                 "content": content,
@@ -253,10 +272,7 @@ class LLMService:
             return {"success": False, "content": msg, "tokens_used": 0}
 
         except requests.HTTPError as exc:
-            msg = (
-                "O servidor de IA retornou um erro interno. "
-                "Tente novamente em alguns instantes."
-            )
+            msg = "O servidor de IA retornou um erro interno. Tente novamente em alguns instantes."
             logger.error("Erro HTTP do Ollama: %s", exc)
             return {"success": False, "content": msg, "tokens_used": 0}
 

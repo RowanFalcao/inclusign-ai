@@ -83,6 +83,9 @@ select = [
 ignore = [
     "E501", # line too long (handled by formatter)
     "B008", # do not perform function calls in argument defaults
+    "E402", # module level import not at top of file
+    "E701", # multiple statements on one line
+    "B905", # zip without strict
 ]
 
 [tool.ruff.lint.isort]

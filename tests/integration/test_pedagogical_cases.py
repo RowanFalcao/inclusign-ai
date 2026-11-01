@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Validação Automatizada dos Casos de Teste Pedagógicos (CICURV 2026)
 ===================================================================
@@ -14,12 +13,28 @@ CASOS_TRADUCAO = [
     ("Computação e Tecnologia", "Root (Superusuário)", "Nível de privilégio total no SO"),
     ("Computação e Tecnologia", "Deadlock", "Impasse de concorrência em sistemas operacionais"),
     # Agronomia
-    ("Agronomia e Ciências Agrárias", "Lixiviação", "Lavagem de nutrientes do solo por água da chuva"),
-    ("Agronomia e Ciências Agrárias", "Alelopatia", "Guerra química biológica entre espécies vegetais"),
+    (
+        "Agronomia e Ciências Agrárias",
+        "Lixiviação",
+        "Lavagem de nutrientes do solo por água da chuva",
+    ),
+    (
+        "Agronomia e Ciências Agrárias",
+        "Alelopatia",
+        "Guerra química biológica entre espécies vegetais",
+    ),
     ("Agronomia e Ciências Agrárias", "Rizóbio", "Bactéria simbiótica fixadora de nitrogênio"),
     # Medicina
-    ("Medicina e Ciências da Saúde", "Rabdomiólise", "Destruição do tecido muscular e sobrecarga renal"),
-    ("Medicina e Ciências da Saúde", "Cetoacidose Diabética", "Queima emergencial de gordura gerando acidose"),
+    (
+        "Medicina e Ciências da Saúde",
+        "Rabdomiólise",
+        "Destruição do tecido muscular e sobrecarga renal",
+    ),
+    (
+        "Medicina e Ciências da Saúde",
+        "Cetoacidose Diabética",
+        "Queima emergencial de gordura gerando acidose",
+    ),
 ]
 
 
@@ -38,7 +53,12 @@ def test_pedagogical_translation_cases(client, dominio, termo, contexto):
 
 CASOS_PLANEJAMENTO = [
     ("Biologia Celular", "Mitose e Meiose", "TEA - Nível 1", "Sensibilidade a ruído"),
-    ("Física Quântica", "Dualidade Onda-Partícula", "TDAH - Desatento", "Necessidade de pausas curtas"),
+    (
+        "Física Quântica",
+        "Dualidade Onda-Partícula",
+        "TDAH - Desatento",
+        "Necessidade de pausas curtas",
+    ),
 ]
 
 
@@ -60,4 +80,3 @@ def test_pedagogical_planning_cases(client, tema, objetivos, perfil, detalhes):
     data = response.get_json()
     assert data["success"] is True
     assert len(data["content"]) > 0
-

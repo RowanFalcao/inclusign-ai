@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 IncluSign AI — Agente Base (Classe Abstrata)
 =============================================
@@ -12,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Generator, Dict, Optional
+from typing import Any
 
 from services.llm_service import LLMService
 from services.rag_service import RAGService
@@ -47,7 +46,7 @@ class AgenteIA(ABC):
     def __init__(
         self,
         llm_service: LLMService,
-        rag_service: Optional[RAGService],
+        rag_service: RAGService | None,
         prompt_file: str,
     ) -> None:
         """
@@ -102,7 +101,9 @@ class AgenteIA(ABC):
             logger.info("Utilizando prompt padrão embutido para '%s'", target_file)
             return DEFAULT_PROMPTS[target_file]
 
-        logger.warning("Nenhum prompt disponível para '%s'. Usando instrução genérica.", target_file)
+        logger.warning(
+            "Nenhum prompt disponível para '%s'. Usando instrução genérica.", target_file
+        )
         return "Você é um assistente educacional inclusivo da plataforma IncluSign AI."
 
     def conectar_api_llama_local(self) -> bool:
@@ -126,9 +127,7 @@ class AgenteIA(ABC):
         if not results:
             return ""
 
-        context_parts = [
-            "\n\n--- CONTEXTO DOS DOCUMENTOS PEDAGÓGICOS ---"
-        ]
+        context_parts = ["\n\n--- CONTEXTO DOS DOCUMENTOS PEDAGÓGICOS ---"]
         for item in results:
             source = item.get("source", "documento")
             text = item.get("text", "")
@@ -146,7 +145,7 @@ class AgenteIA(ABC):
         self,
         user_prompt: str,
         extra_context: str = "",
-        temperature: Optional[float] = None,
+        temperature: float | None = None,
         stream: bool = False,
         think: bool = False,
     ) -> Any:

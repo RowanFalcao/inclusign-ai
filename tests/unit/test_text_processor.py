@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testes unitários para o processador textual e higienização de dados."""
 
 from services.text_processor import TextProcessor
@@ -21,4 +20,3 @@ def test_clean_extracted_blocks_empty_input():
     """Valida comportamento defensivo para entradas vazias."""
     cleaned = TextProcessor.clean_extracted_blocks([])
     assert cleaned == ""
-

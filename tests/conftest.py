@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 IncluSign AI — Test Fixtures (Pytest)
 ======================================
@@ -8,8 +7,9 @@ Permite execução imediata em qualquer ambiente sem necessidade de Ollama ou GP
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 from flask.testing import FlaskClient
 
 from app import create_app
@@ -86,4 +86,3 @@ def app_instance(mock_llm_service, mock_rag_service, mock_telemetry_service):
 def client(app_instance) -> FlaskClient:
     """Cliente de teste Flask para simular requisições HTTP."""
     return app_instance.test_client()
-

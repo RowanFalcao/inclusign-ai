@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 IncluSign AI — Aplicação Principal (Application Factory)
 =========================================================
@@ -32,7 +31,7 @@ import time
 import uuid
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from flask import Flask, Response, jsonify, render_template, request
 
@@ -42,12 +41,12 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 import config
+from agents.planning_agent import AgentePlanejamento
+from agents.translation_agent import AgenteTraducao
 from config import DEBUG_MODE, SERVER_HOST, SERVER_PORT, ensure_directories
 from services.llm_service import LLMService
 from services.rag_service import RAGService
 from services.telemetry_service import TelemetryService
-from agents.translation_agent import AgenteTraducao
-from agents.planning_agent import AgentePlanejamento
 
 # Configuração de logging estruturado
 logging.basicConfig(
@@ -59,10 +58,10 @@ logger = logging.getLogger("IncluSign")
 
 
 def create_app(
-    test_config: Optional[dict[str, Any]] = None,
-    llm_service_override: Optional[LLMService] = None,
-    rag_service_override: Optional[RAGService] = None,
-    telemetry_service_override: Optional[TelemetryService] = None,
+    test_config: dict[str, Any] | None = None,
+    llm_service_override: LLMService | None = None,
+    rag_service_override: RAGService | None = None,
+    telemetry_service_override: TelemetryService | None = None,
 ) -> Flask:
     """
     Application Factory para instanciar a aplicação Flask de forma desacoplada.
@@ -83,7 +82,7 @@ def create_app(
 
     # Inicialização ou injeção dos serviços
     llm = llm_service_override or LLMService()
-    
+
     if rag_service_override is not None:
         rag = rag_service_override
     else:
@@ -117,11 +116,13 @@ def create_app(
         llm_ok = llm.is_available()
         rag_ok = rag.available if rag else False
         status_code = 200 if llm_ok else 503
-        return jsonify({
-            "ready": llm_ok,
-            "llm_available": llm_ok,
-            "rag_available": rag_ok,
-        }), status_code
+        return jsonify(
+            {
+                "ready": llm_ok,
+                "llm_available": llm_ok,
+                "rag_available": rag_ok,
+            }
+        ), status_code
 
     # ------------------------------------------------------------------------
     # ROTAS WEB E SPA
@@ -153,18 +154,20 @@ def create_app(
         llm_data = llm.get_status()
         llm_data["tipo"] = "local"
 
-        return jsonify({
-            "llm": llm_data,
-            "rag": rag_status_data,
-            "telemetria": telemetry.get_stats(),
-            "sistema": {
-                "nome": "IncluSign AI",
-                "versao": "1.0.0",
-                "modelo": config.OLLAMA_MODEL,
-                "servidor": f"{SERVER_HOST}:{SERVER_PORT}",
-                "diagnostico": config.get_system_diagnostics(),
-            },
-        })
+        return jsonify(
+            {
+                "llm": llm_data,
+                "rag": rag_status_data,
+                "telemetria": telemetry.get_stats(),
+                "sistema": {
+                    "nome": "IncluSign AI",
+                    "versao": "1.0.0",
+                    "modelo": config.OLLAMA_MODEL,
+                    "servidor": f"{SERVER_HOST}:{SERVER_PORT}",
+                    "diagnostico": config.get_system_diagnostics(),
+                },
+            }
+        )
 
     @app.route("/api/translate", methods=["POST"])
     def api_translate():
@@ -173,17 +176,22 @@ def create_app(
         session_id = data.get("session_id", str(uuid.uuid4())[:8])
         stream_requested = data.get("stream", False)
 
-        result = translation_agent.processar({
-            "dominio": data.get("dominio", ""),
-            "termo": data.get("termo", ""),
-            "contexto": data.get("contexto", ""),
-        }, stream=stream_requested)
+        result = translation_agent.processar(
+            {
+                "dominio": data.get("dominio", ""),
+                "termo": data.get("termo", ""),
+                "contexto": data.get("contexto", ""),
+            },
+            stream=stream_requested,
+        )
 
         if stream_requested:
             if isinstance(result, dict):
+
                 def error_generator():
                     yield f"data: {json.dumps({'content': result.get('content', 'Erro de conexão com a IA.'), 'success': False})}\n\n"
                     yield f"data: {json.dumps({'done': True})}\n\n"
+
                 return Response(error_generator(), mimetype="text/event-stream")
 
             def sse_generator():
@@ -216,7 +224,7 @@ def create_app(
 
                 chat_histories[context_key] = [
                     {"role": "user", "content": user_msg},
-                    {"role": "assistant", "content": full_content}
+                    {"role": "assistant", "content": full_content},
                 ]
 
                 elapsed_ms = int((time.time() - start_time) * 1000)
@@ -231,7 +239,11 @@ def create_app(
                         "contexto": data.get("contexto", ""),
                     },
                     output_data={"success": True, "content": full_content},
-                    metadata={"tokens_used": estimated_tokens, "response_time_ms": elapsed_ms, "ttft_ms": ttft},
+                    metadata={
+                        "tokens_used": estimated_tokens,
+                        "response_time_ms": elapsed_ms,
+                        "ttft_ms": ttft,
+                    },
                 )
                 yield f"data: {json.dumps({'done': True, 'response_time_ms': elapsed_ms, 'tokens_used': estimated_tokens})}\n\n"
 
@@ -242,7 +254,7 @@ def create_app(
             user_msg = f"Traduza o termo '{data.get('termo')}' no domínio '{data.get('dominio')}'. Contexto de uso: {data.get('contexto')}"
             chat_histories[context_key] = [
                 {"role": "user", "content": user_msg},
-                {"role": "assistant", "content": result["content"]}
+                {"role": "assistant", "content": result["content"]},
             ]
 
         telemetry.log_interaction(
@@ -272,19 +284,25 @@ def create_app(
         stream_requested = data.get("stream", False)
         use_reasoning = data.get("use_reasoning", False)
 
-        result = planning_agent.processar({
-            "tema": data.get("tema", ""),
-            "objetivos": data.get("objetivos", ""),
-            "perfil": data.get("perfil", ""),
-            "perfil_detalhe": data.get("perfil_detalhe", ""),
-            "duracao": data.get("duracao", "50 minutos"),
-        }, stream=stream_requested, use_reasoning=use_reasoning)
+        result = planning_agent.processar(
+            {
+                "tema": data.get("tema", ""),
+                "objetivos": data.get("objetivos", ""),
+                "perfil": data.get("perfil", ""),
+                "perfil_detalhe": data.get("perfil_detalhe", ""),
+                "duracao": data.get("duracao", "50 minutos"),
+            },
+            stream=stream_requested,
+            use_reasoning=use_reasoning,
+        )
 
         if stream_requested:
             if isinstance(result, dict):
+
                 def error_generator():
                     yield f"data: {json.dumps({'content': result.get('content', 'Erro de conexão com a IA.'), 'success': False})}\n\n"
                     yield f"data: {json.dumps({'done': True})}\n\n"
+
                 return Response(error_generator(), mimetype="text/event-stream")
 
             def sse_generator():
@@ -323,7 +341,7 @@ def create_app(
 
                 chat_histories[context_key] = [
                     {"role": "user", "content": user_msg},
-                    {"role": "assistant", "content": full_content}
+                    {"role": "assistant", "content": full_content},
                 ]
 
                 elapsed_ms = int((time.time() - start_time) * 1000)
@@ -359,7 +377,7 @@ def create_app(
             )
             chat_histories[context_key] = [
                 {"role": "user", "content": user_msg},
-                {"role": "assistant", "content": result["content"]}
+                {"role": "assistant", "content": result["content"]},
             ]
 
         telemetry.log_interaction(
@@ -416,6 +434,7 @@ def create_app(
         )
 
         if stream_mode:
+
             def sse_generator():
                 full_content = ""
                 total_content_length = 0
@@ -456,16 +475,21 @@ def create_app(
             session_id=session_id,
             agent_type=f"chat_{agent_type}",
             input_data={"message": user_msg},
-            output_data={"success": result.get("success", False), "content": result.get("content", "")},
+            output_data={
+                "success": result.get("success", False),
+                "content": result.get("content", ""),
+            },
             metadata={"tokens_used": result.get("tokens_used", 0), "response_time_ms": elapsed_ms},
         )
 
-        return jsonify({
-            "success": result.get("success", False),
-            "content": result.get("content", ""),
-            "tokens_used": result.get("tokens_used", 0),
-            "response_time_ms": elapsed_ms,
-        })
+        return jsonify(
+            {
+                "success": result.get("success", False),
+                "content": result.get("content", ""),
+                "tokens_used": result.get("tokens_used", 0),
+                "response_time_ms": elapsed_ms,
+            }
+        )
 
     @app.route("/api/telemetry", methods=["GET"])
     def api_telemetry():
@@ -473,10 +497,12 @@ def create_app(
         limit = request.args.get("limit", 50, type=int)
         history = telemetry.get_history(limit=limit)
         stats = telemetry.get_stats()
-        return jsonify({
-            "historico": history,
-            "estatisticas": stats,
-        })
+        return jsonify(
+            {
+                "historico": history,
+                "estatisticas": stats,
+            }
+        )
 
     @app.route("/api/telemetry/export", methods=["GET"])
     def api_telemetry_export():
@@ -502,10 +528,12 @@ def create_app(
         if rag:
             result = rag.reindex()
             return jsonify(result)
-        return jsonify({
-            "success": False,
-            "message": "Serviço RAG não disponível.",
-        }), 503
+        return jsonify(
+            {
+                "success": False,
+                "message": "Serviço RAG não disponível.",
+            }
+        ), 503
 
     # ------------------------------------------------------------------------
     # TRATAMENTO DE ERROS

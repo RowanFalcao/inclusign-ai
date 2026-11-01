@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 IncluSign AI — Agente de Planejamento Pedagógico (Módulo 3)
 ============================================================
@@ -105,16 +104,16 @@ class AgentePlanejamento(AgenteIA):
         # Enriquecimento com contexto do RAG: filtragem de documentos e busca semântica
         rag_query = f"adaptação pedagógica inclusão {perfil_nome} dicas estratégias"
         rag_context = ""
-        
+
         if self._rag and self._rag.available:
             context_items = self._rag.query(rag_query, top_k=10)
             textos_filtrados = []
-            
+
             for item in context_items:
                 # Desconsidera dicionários terminológicos para restringir o contexto a manuais pedagógicos
                 if "dicionario" not in item.get("source", "").lower():
                     textos_filtrados.append(f"\n[Fonte: {item['source']}]\n{item['text']}")
-            
+
             if textos_filtrados:
                 rag_context = (
                     "\n\n--- CONTEXTO DOS DOCUMENTOS PEDAGÓGICOS ---"

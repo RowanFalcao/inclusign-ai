@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 """Testes unitários para os agentes especializados de IA."""
 
-from agents.translation_agent import AgenteTraducao
 from agents.planning_agent import AgentePlanejamento
+from agents.translation_agent import AgenteTraducao
 
 
 def test_translation_agent_processar(mock_llm_service, mock_rag_service):
     """Valida o fluxo do agente de tradução contextual."""
     agent = AgenteTraducao(mock_llm_service, mock_rag_service)
-    
+
     dados = {
         "dominio": "Computação e Tecnologia",
         "termo": "Nuvem Computacional",
@@ -37,4 +36,3 @@ def test_planning_agent_processar(mock_llm_service, mock_rag_service):
     assert resultado["success"] is True
     assert "content" in resultado
     mock_llm_service.generate.assert_called_once()
-

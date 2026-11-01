@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 IncluSign AI — Serviço de Telemetria
 =====================================
@@ -17,7 +16,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from config import LOGS_DIR, LOG_FILENAME_PATTERN
+from config import LOG_FILENAME_PATTERN, LOGS_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +119,7 @@ class TelemetryService:
             log_files = sorted(LOGS_DIR.glob("*.jsonl"), reverse=True)
 
             for log_file in log_files:
-                with open(log_file, "r", encoding="utf-8") as f:
+                with open(log_file, encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
                         if line:
@@ -153,29 +152,33 @@ class TelemetryService:
         writer = csv.writer(output, quoting=csv.QUOTE_ALL)
 
         # Cabeçalho
-        writer.writerow([
-            "ID",
-            "Data/Hora",
-            "Sessão",
-            "Agente",
-            "Entrada",
-            "Saída",
-            "Tokens",
-            "Tempo (ms)",
-        ])
+        writer.writerow(
+            [
+                "ID",
+                "Data/Hora",
+                "Sessão",
+                "Agente",
+                "Entrada",
+                "Saída",
+                "Tokens",
+                "Tempo (ms)",
+            ]
+        )
 
         for record in records:
             meta = record.get("metadata", {})
-            writer.writerow([
-                record.get("id", ""),
-                record.get("timestamp", ""),
-                record.get("session_id", ""),
-                record.get("agent_type", ""),
-                json.dumps(record.get("input", {}), ensure_ascii=False),
-                json.dumps(record.get("output", {}), ensure_ascii=False),
-                meta.get("tokens_used", ""),
-                meta.get("response_time_ms", ""),
-            ])
+            writer.writerow(
+                [
+                    record.get("id", ""),
+                    record.get("timestamp", ""),
+                    record.get("session_id", ""),
+                    record.get("agent_type", ""),
+                    json.dumps(record.get("input", {}), ensure_ascii=False),
+                    json.dumps(record.get("output", {}), ensure_ascii=False),
+                    meta.get("tokens_used", ""),
+                    meta.get("response_time_ms", ""),
+                ]
+            )
 
         return output.getvalue()
 
@@ -222,12 +225,8 @@ class TelemetryService:
     def get_stats(self) -> dict:
         """Retorna estatísticas da telemetria."""
         records = self.get_history(limit=10000)
-        traducao_count = sum(
-            1 for r in records if r.get("agent_type") == "traducao"
-        )
-        planejamento_count = sum(
-            1 for r in records if r.get("agent_type") == "planejamento"
-        )
+        traducao_count = sum(1 for r in records if r.get("agent_type") == "traducao")
+        planejamento_count = sum(1 for r in records if r.get("agent_type") == "planejamento")
 
         return {
             "total_interacoes": len(records),

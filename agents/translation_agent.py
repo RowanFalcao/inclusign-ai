@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 IncluSign AI — Agente de Tradução Contextual para Libras (Módulo 1)
 ===================================================================
@@ -11,7 +10,7 @@ Requisitos atendidos: RF-003 a RF-009 (CICURV 2026)
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from agents.base_agent import AgenteIA
 from services.llm_service import LLMService
